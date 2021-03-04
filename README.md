@@ -1,9 +1,17 @@
 # Predicting MLB Pitch Types
 ## By: Patrick Bovard
 ### *Final Passion Project for Metis Winter 2021*
-### Project Intro Information 
 
+### Project Intro Information 
 **Project Description:** Utilizing MLB Pitch by Pitch Data to predict what pitch type, and in what location, a pitcher will throw to a batter. 
+
+**Data Sources:** Data from the following sources has been utilized in this project:  
+- Paul Schale's [MLB Pitch Data Kaggle Dataset](https://www.kaggle.com/pschale/mlb-pitch-data-20152018?select=games.csv).  Includes MLB Pitch data from 2015-2019.
+- Baseball Savant's [Statcast search tool](https://baseballsavant.mlb.com/statcast_search).  Data was scraped from this site using Selenium and BeautifulSoup for 2020 pitch data.  
+
+**Tools Utilized:** 
+- Webscraping: BeautifulSoup, Selenium
+- Data Analysis and Model Building: Python, Pandas, Numpy, Scikit-Learn
 
 **Possible Impacts:** Possible impacts of this project are as a gameplanning tool, that a batter could use to prepare.  While it couldn't be utilized mid-game, it could be used as a preparation tool while getting ready to face a certain pitcher.
 
