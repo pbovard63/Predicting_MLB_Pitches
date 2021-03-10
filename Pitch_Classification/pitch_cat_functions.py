@@ -75,7 +75,7 @@ def pitch_type_to_num(df, col_name):
         df.Pitch_Type_Num.iloc[i] = type_dict[pitch]
     return df
     
-def random_forest_eval_kfold(Player_Name,X,y, df,k=5, threshold = 0.5):
+def random_forest_eval_kfold(Player_Name,X,y, df,k=5):
     '''
     Arguments: takes in a set of features X and a target variable y.  Y is a classification (0/1). 
     Also includes a threshold, default of 0.5, for classification purposes.  This runs K-Fold cross validation, with a default k of 5.
@@ -132,4 +132,25 @@ def confusion_matrix_generator(confusion_matrix, name, pitch_types):
     plt.ylabel('Actual Pitch Type')
     plt.title('{} confusion matrix'.format(name));
 
+def random_forest_pitch_pipeline(Player_Name, df, ohe_cols, feature_cols, k=5):
+    '''
+    Arguments: takes in a player name, a Pandas dataframe of pitch data, columns to one-hot encode, and columns to use as features. K for number of k-folds in cross validation, default=5.
+    REturns: classification results of the pitchers pitch types after Random Forest classification.
+    '''
+    #Filtering df for the entered player:
+    player_df = df[df.pitcher_full_name == Player_Name]
 
+    #One Hot Encoding the entered columns:
+    ohe_df = column_ohe_maker(player_df, ohe_cols)
+
+    #Encoding the pitch types with numbers:
+    output_df = pitch_type_to_num(ohe_df, 'pitch_type')
+
+    #Preparing the dataframe for Random Forest Classification, using random_forest_eval_kfold function:
+    model_df = output_df[output_df.last_pitch_px.notnull()]
+    col = feature_cols
+    X = model_df[col]
+    y = model_df['Pitch_Type_Num']
+
+    model = random_forest_eval_kfold(Player_Name,X,y, model_df,k)
+    return model
