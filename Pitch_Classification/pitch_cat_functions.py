@@ -118,6 +118,50 @@ def random_forest_eval_kfold(Player_Name,X,y, df,k=5):
     
     return rf_model
 
+def random_forest_eval_kfold_general(X,y, df,k=5):
+    '''
+    Arguments: takes in a set of features X and a target variable y.  Y is a classification (0/1). 
+    Also includes a threshold, default of 0.5, for classification purposes.  This runs K-Fold cross validation, with a default k of 5.
+    Returns: Performs RandomForest classification and returns the scores.  Default classification threshold is set at 0.5.
+    '''
+    print('Random Forest Results for Whole Set')
+    
+    X_cv, y_cv = np.array(X), np.array(y)
+    kf = KFold(n_splits=k, shuffle=True, random_state = 12)
+    
+    #Setting up empty lists:
+    cv_rf_acc = []
+    cv_rf_prec = []
+    cv_rf_rec = []
+    cv_rf_fbeta = []
+    cv_rf_f1 = []
+    
+    #K-Fold Loop:
+    i = 1
+    for train_ind, val_ind in kf.split(X_cv,y_cv):
+        X_train, y_train = X_cv[train_ind], y_cv[train_ind]
+        X_val, y_val = X_cv[val_ind], y_cv[val_ind] 
+    
+        #Running Model and making predictions:
+        rf_model = RandomForestClassifier()
+        rf_model.fit(X_train, y_train)
+
+        y_pred = rf_model.predict(X_val)
+        #y_pred = (rf_model.predict_proba(X_val)[:, 1] >= threshold)
+
+        #Printing Confusion Matrix for each round:
+        cm = confusion_matrix(y_val, y_pred)
+        print("Confusion Matrix for Fold {}".format(i))
+        print(cm)
+        print('\n')
+        i += 1
+        
+    pitch_types = df.pitch_type.value_counts().index 
+    confusion_matrix_generator(cm,'Whole Set Random Forest', pitch_types)
+    
+    return rf_model
+
+
 def confusion_matrix_generator(confusion_matrix, name, pitch_types):
     '''
     Arguments: takes in the basic confusion matrix, and the name of the model to title the output graph.
@@ -154,3 +198,107 @@ def random_forest_pitch_pipeline(Player_Name, df, ohe_cols, feature_cols, k=5):
 
     model = random_forest_eval_kfold(Player_Name,X,y, model_df,k)
     return model
+
+
+def random_forest_pitch_pipeline_general(df, ohe_cols, feature_cols, k=5):
+    '''
+    Arguments: takes in a player name, a Pandas dataframe of pitch data, columns to one-hot encode, and columns to use as features. K for number of k-folds in cross validation, default=5.
+    REturns: classification results of the pitchers pitch types after Random Forest classification.
+    '''
+    #One Hot Encoding the entered columns:
+    ohe_df = column_ohe_maker(df, ohe_cols)
+
+    #Encoding the pitch types with numbers:
+    output_df = pitch_type_to_num(ohe_df, 'pitch_type')
+
+    #Preparing the dataframe for Random Forest Classification, using random_forest_eval_kfold function:
+    model_df = output_df[output_df.last_pitch_px.notnull()]
+    col = feature_cols
+    X = model_df[col]
+    y = model_df['Pitch_Type_Num']
+
+    model = random_forest_eval_kfold_general(X,y, model_df,k)
+    return model
+
+
+def random_forest_eval_kfold_oversample(Player_Name,X,y, df,k=5):
+    '''
+    Arguments: takes in a set of features X and a target variable y.  Runs minority class oversampling using SMOTE on the minority classes.
+    Also includes a threshold, default of 0.5, for classification purposes.  This runs K-Fold cross validation, with a default k of 5.
+    Returns: Performs RandomForest classification and returns the scores.  Default classification threshold is set at 0.5.
+    '''
+    #Importing specific imbalanced class packages:
+    import imblearn
+    from imblearn.over_sampling import SMOTE
+    
+    print('Random Forest Results for {}'.format(Player_Name))
+    
+    X_cv, y_cv = np.array(X), np.array(y)
+    kf = KFold(n_splits=k, shuffle=True, random_state = 12)
+    
+    #Setting up empty lists:
+    cv_rf_acc = []
+    cv_rf_prec = []
+    cv_rf_rec = []
+    cv_rf_fbeta = []
+    cv_rf_f1 = []
+    
+    #K-Fold Loop:
+    i = 1
+    for train_ind, val_ind in kf.split(X_cv,y_cv):
+        X_train, y_train = X_cv[train_ind], y_cv[train_ind]
+        X_val, y_val = X_cv[val_ind], y_cv[val_ind] 
+        
+        #Running class imbalance correction on the train set only:
+        oversample = SMOTE()
+        Xr_train, yr_train = oversample.fit_resample(X_train, y_train)
+    
+        #Running Model and making predictions:
+        rf_model = RandomForestClassifier()
+        rf_model.fit(Xr_train, yr_train)
+
+        y_pred = rf_model.predict(X_val)
+        #y_pred = (rf_model.predict_proba(X_val)[:, 1] >= threshold)
+
+        #Appending Metrics:
+        cv_rf_prec.append(precision_score(y_val, y_pred, average='macro'))
+        print('Precision scores: {}'.format(cv_rf_prec))
+        print('Mean Precision: {}'.format(np.mean(cv_rf_prec)))
+        
+        #Printing Confusion Matrix for each round:
+        cm = confusion_matrix(y_val, y_pred)
+        print("Confusion Matrix for Fold {}".format(i))
+        print(cm)
+        print('\n')
+        i += 1
+        
+    pitch_types = df.pitch_type.value_counts().index 
+    confusion_matrix_generator(cm,'{} Random Forest'.format(Player_Name), pitch_types)
+    
+    return rf_model
+
+
+def random_forest_pitch_pipeline_oversample(Player_Name, df, ohe_cols, feature_cols, k=5):
+    '''
+    Arguments: takes in a player name, a Pandas dataframe of pitch data, columns to one-hot encode, and columns to use as features. K for number of k-folds in cross validation, default=5.
+    REturns: classification results of the pitchers pitch types after Random Forest classification.
+    '''
+    #Filtering df for the entered player:
+    player_df = df[df.pitcher_full_name == Player_Name]
+
+    #One Hot Encoding the entered columns:
+    ohe_df = column_ohe_maker(player_df, ohe_cols)
+
+    #Encoding the pitch types with numbers:
+    output_df = pitch_type_to_num(ohe_df, 'pitch_type')
+
+    #Preparing the dataframe for Random Forest Classification, using random_forest_eval_kfold function:
+    model_df = output_df[output_df.last_pitch_px.notnull()]
+    col = feature_cols
+    X = model_df[col]
+    y = model_df['Pitch_Type_Num']
+
+    model = random_forest_eval_kfold_oversample(Player_Name,X,y, model_df,k)
+    return model
+
+
