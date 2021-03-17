@@ -75,6 +75,25 @@ def pitch_type_to_num(df, col_name):
         df.Pitch_Type_Num.iloc[i] = type_dict[pitch]
     return df
     
+def last_pitch_type_to_num(df, col_name):
+    '''
+    Arguments: takes in a dataframe for machine learning modeling, and the column name that houses pitch types.
+    Returns: a new dataframe, with the pitch types converted to a numericla coding.
+    '''
+    #Pulling the list of pitch types, and creating a dictionary with a number to code:
+    type_list = df[col_name].value_counts().index
+    type_dict = {}
+    for i, pitch_type in enumerate(type_list):
+        type_dict[pitch_type] = i
+    print('Here is the coding for last pitch type:')  #printing so user can see the codings.
+    print(type_dict)
+    
+    #Creating a new numerical pitch type column, and assigning values:
+    df['Last_Pitch_Type_Num'] = 0
+    for i, pitch in enumerate(df[col_name]):
+        df.Last_Pitch_Type_Num.iloc[i] = type_dict[pitch]
+    return df
+
 def random_forest_eval_kfold(Player_Name,X,y, df,k=5):
     '''
     Arguments: takes in a set of features X and a target variable y.  Y is a classification (0/1). 
