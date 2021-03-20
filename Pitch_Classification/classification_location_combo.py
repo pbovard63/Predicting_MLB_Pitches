@@ -344,7 +344,7 @@ def pitch_prediction_modeling_pipeline(player_name, data, split_size = 0.2, clas
     elif class_method == 'XGBoost':
         xg_model, val_df = xgboost_pitch_classification(training_pitches, val_pitches)
     
-    if reg_method == 'Linear'
+    if reg_method == 'Linear':
         #Running linear regression predictions on the pitch x coordinate (px):
         px_model, val_df = px_linear_regression(training_pitches, val_df)
         

@@ -32,6 +32,8 @@ from sklearn.metrics import confusion_matrix
 from sklearn.preprocessing import StandardScaler
 from sklearn.model_selection import KFold
 from xgboost import XGBClassifier
+from sklearn.ensemble import RandomForestRegressor 
+
 
 #Importing some individual classification and regression functions:
 from location_regression_functions import *
@@ -244,7 +246,76 @@ def pz_linear_regression(train_df, val_df):
 
     return lm, val_df
 
-def pitch_prediction_modeling_pipeline(player_name, data, split_size = 0.2, class_method = 'RandomForest'):
+def px_rf_regression(train_df, val_df):
+    '''
+    Arguments: takes in a training and validation dataframe.
+    Returns: a RandomForest regression model of the x location of the pitch (px), with the predicted values mapped onto the validation dataframe input.
+    '''
+    #Setting up the columns needed:
+    px_cols = ['Cluster','inning', 'top', 'on_1b', 'on_2b', 'on_3b', 'b_count', 's_count', 'outs', 'stand_R',
+       'pitcher_run_diff','last_pitch_speed', 'last_pitch_px', 'last_pitch_pz','pitch_num','cumulative_pitches',
+       'Last_Pitch_Type_Num', 'Pitch_Type_Num']
+    px_cols_val = px_cols.copy()
+    px_cols_val.append('pitch_pred')
+    px_cols_val.remove('Pitch_Type_Num')
+
+    #Setting up the x and y inputs for RF regression:
+    X_px_tr = train_df[px_cols]
+    y_px_tr = train_df['px']
+    X_px_val = val_df[px_cols_val]
+    y_px_val = val_df['px']
+
+    #Fitting RF regression on the training data, then predicting and scoring on the validation set:
+    rf = RandomForestRegressor(criterion='mae')
+    rf.fit(X_px_tr, y_px_tr)
+    px_pred = rf.predict(X_px_val)
+    px_r2 = rf.score(X_px_val, y_px_val)
+    px_mae = mae(y_px_val, px_pred)
+    print('Val Px R^2: {}'.format(px_r2))
+    print('Val Px MAE: {} ft.'.format(px_mae))
+
+    #Mapping the predicted px values onto the validation set:
+    val_df['px_pred'] = px_pred
+
+    return rf, val_df
+
+
+def pz_rf_regression(train_df, val_df):
+    '''
+    Arguments: takes in a training and validation dataframe.
+    Returns: a RandomForest regression model of the z location of the pitch (pz), with the predicted values mapped onto the validation dataframe input.
+    '''
+    #Setting up the columns needed:
+    pz_cols = ['Cluster','inning', 'top', 'on_1b', 'on_2b', 'on_3b', 'b_count', 's_count', 'outs', 'stand_R',
+       'pitcher_run_diff','last_pitch_speed', 'last_pitch_px', 'last_pitch_pz','pitch_num','cumulative_pitches',
+       'Last_Pitch_Type_Num', 'Pitch_Type_Num', 'px']
+    pz_cols_val = pz_cols.copy()
+    pz_cols_val.append('px_pred')
+    pz_cols_val.remove('px')
+
+    #Setting up the x and y inputs for RF regression:
+    X_pz_tr = train_df[pz_cols]
+    y_pz_tr = train_df['pz']
+    X_pz_val = val_df[pz_cols_val]
+    y_pz_val = val_df['pz']
+
+    #Fitting RF regression on the training data, then predicting and scoring on the validation set:
+    rf = RandomForestRegressor(criterion='mae')
+    rf.fit(X_pz_tr, y_pz_tr)
+    pz_pred = rf.predict(X_pz_val)
+    pz_r2 = rf.score(X_pz_val, y_pz_val)
+    pz_mae = mae(y_pz_val, pz_pred)
+    print('Val Pz R^2: {}'.format(pz_r2))
+    print('Val Pz MAE: {} ft.'.format(pz_mae))
+
+    #Mapping the predicted px values onto the validation set:
+    val_df['pz_pred'] = pz_pred
+
+    return rf, val_df
+
+
+
+def pitch_prediction_modeling_pipeline(player_name, data, split_size = 0.2, class_method = 'RandomForest', reg_method = 'Linear'):
     '''
     Arguments: takes in a player name and a dataframe of MLB league-wide pitch data.  The default split size for train/validation by at bat is 0.20.
     Returns: Runs pitch classification modeling via Random Forest for pitch types, then pitch location prediction via linear regression.  
@@ -262,16 +333,27 @@ def pitch_prediction_modeling_pipeline(player_name, data, split_size = 0.2, clas
     
     elif class_method == 'XGBoost':
         xg_model, val_df = xgboost_pitch_classification(training_pitches, val_pitches)
-    #Running linear regression predictions on the pitch x coordinate (px):
-    px_model, val_df = px_linear_regression(training_pitches, val_df)
     
-    #Running linear regression predictions on the pitch z coordinate (pz):
-    pz_model, val_df = pz_linear_regression(training_pitches, val_df)
+    if reg_method == 'Linear':
+        print('Linear Regression:')
+        #Running linear regression predictions on the pitch x coordinate (px):
+        px_model, val_df = px_linear_regression(training_pitches, val_df)
+        
+        #Running linear regression predictions on the pitch z coordinate (pz):
+        pz_model, val_df = pz_linear_regression(training_pitches, val_df)
+    
+    elif reg_method == 'RandomForest':
+        print('Random Forest Regression:')
+        #Running Random Forest regression predictions on the pitch x coordinate (px):
+        px_model, val_df = px_rf_regression(training_pitches, val_df)
+        
+        #Running Random Forest regression predictions on the pitch z coordinate (pz):
+        pz_model, val_df = pz_rf_regression(training_pitches, val_df)
     
     #returning the validation dataframe with the predictions mapped out:
     return val_df
 
-def multiple_pitcher_predictions(player_name_list, data, split_size = 0.2, class_method = 'RandomForest'):
+def multiple_pitcher_predictions(player_name_list, data, split_size = 0.2, class_method = 'RandomForest', reg_method = 'Linear'):
     '''
     Arguments: takes in a list of player names and a dataframe of MLB league-wide pitch data.  The default split size for train/validation by at bat is 0.20.
     Returns: Runs pitch classification modeling via Random Forest for pitch types, then pitch location prediction via linear regression.  
@@ -279,7 +361,7 @@ def multiple_pitcher_predictions(player_name_list, data, split_size = 0.2, class
     '''
     counter = 0
     for player in player_name_list:
-        val_df = pitch_prediction_modeling_pipeline(player, data, split_size = split_size)
+        val_df = pitch_prediction_modeling_pipeline(player, data, split_size = split_size, class_method=class_method, reg_method=reg_method)
         #Adding in a check to initiate the output dataframe for the first loop through:
         if counter == 0:
             output_df = pd.DataFrame(columns=val_df.columns)
