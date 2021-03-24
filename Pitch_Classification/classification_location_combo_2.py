@@ -88,9 +88,9 @@ def random_forest_pitch_classification(train_df, val_df):
        'cumulative_ch_rate', 'cumulative_cu_rate', 'cumulative_si_rate',
        'cumulative_fc_rate', 'cumulative_kc_rate', 'cumulative_fs_rate',
        'cumulative_kn_rate', 'cumulative_ep_rate', 'cumulative_fo_rate',
-       'cumulative_sc_rate', 'Last_Pitch_Type_Num', 'last_100_ff', 'last_100_sl', 'last_100_ft', 'last_100_ch',
-       'last_100_cu', 'last_100_si', 'last_100_fc', 'last_100_kc',
-       'last_100_fs', 'last_100_kn', 'last_100_ep', 'last_100_fo']
+       'cumulative_sc_rate', 'Last_Pitch_Type_Num', 'last_10_ff', 'last_10_sl', 'last_10_ft', 'last_10_ch',
+       'last_10_cu', 'last_10_si', 'last_10_fc', 'last_10_kc', 'last_10_fs',
+       'last_10_kn', 'last_10_ep', 'last_10_fo', 'last_10_sc']
     
     #Setting up the X and y train/validation sets for random forest classification:
     X_rf_train = train_df[rf_cols]
@@ -139,9 +139,9 @@ def xgboost_pitch_classification(train_df, val_df):
        'cumulative_ch_rate', 'cumulative_cu_rate', 'cumulative_si_rate',
        'cumulative_fc_rate', 'cumulative_kc_rate', 'cumulative_fs_rate',
        'cumulative_kn_rate', 'cumulative_ep_rate', 'cumulative_fo_rate',
-       'cumulative_sc_rate', 'Last_Pitch_Type_Num', 'last_100_ff', 'last_100_sl', 'last_100_ft', 'last_100_ch',
-       'last_100_cu', 'last_100_si', 'last_100_fc', 'last_100_kc',
-       'last_100_fs', 'last_100_kn', 'last_100_ep', 'last_100_fo']
+       'cumulative_sc_rate', 'Last_Pitch_Type_Num', 'last_10_ff', 'last_10_sl', 'last_10_ft', 'last_10_ch',
+       'last_10_cu', 'last_10_si', 'last_10_fc', 'last_10_kc', 'last_10_fs',
+       'last_10_kn', 'last_10_ep', 'last_10_fo', 'last_10_sc']
     
     #Setting up the X and y train/validation sets for random forest classification:
     X_xg_train = train_df[xg_cols]
