@@ -1,5 +1,5 @@
 '''
-This file contains functions for running K-means clustering on a dataframe.
+This file contains functions for running K-means clustering on a dataframe of hitting statistics, to group similar hitters together in a dimensionality reduction of their full stats.
 '''
 #Importing needed packages:
 from sklearn.preprocessing import scale
@@ -42,7 +42,7 @@ def inertia_plotter(X, max_clusters=10):
 
 def cluster_assigner(df, X_cols, num_clusters, standard_scaler=True):
     '''
-    Arguments: takes in a dataset df with columns X_cols to run K-Means clustering on.  ALso, a standard_scaler argument, default set to True.  If True, will standard scale all columns in X.
+    Arguments: takes in a dataset df with columns X_cols to run K-Means clustering on.  Also, takes in a standard_scaler argument, default set to True.  If True, will standard scale all columns in X.
     Also takes in num_clusters, which is the number of clusters to use in K-means clustering.
     Returns: a dataframe with clusters assigned after running K-means clustering.
     '''
